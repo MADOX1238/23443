@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>الدردشة العشوائية</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 50px;
+        background-color: #f4f4f4;
+    }
+    h1 {
+        font-size: 40px;
+        font-weight: bold;
+        margin-bottom: 40px;
+    }
+    .chat-box {
+        margin-top: 20px;
+        width: 60%;
+        height: 300px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        padding: 10px;
+        overflow-y: scroll;
+    }
+    input {
+        width: 80%;
+        padding: 10px;
+    }
+    button {
+        padding: 10px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>الدردشة العشوائية</h1>
+  <p>مرحباً <span id="user1"></span> و <span id="user2"></span></p>
+
+  <div class="chat-box" id="chatBox">
+      <!-- رسائل الدردشة تظهر هنا -->
+  </div>
+
+  <input type="text" id="messageInput" placeholder="أدخل رسالتك هنا">
+  <button id="sendMessageBtn">إرسال</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnHSUo_Vu53NidFWYlQ74_CyOyfVW_BqQ",
+      authDomain: "alaah-8d503.firebaseapp.com",
+      databaseURL: "https://alaah-8d503-default-rtdb.firebaseio.com",
+      projectId: "alaah-8d503",
+      storageBucket: "alaah-8d503.firebasestorage.app",
+      messagingSenderId: "365922482892",
+      appId: "1:365922482892:web:a843fbb3594d200c67e069",
+      measurementId: "G-D4TPJW4RT8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // قراءة أسماء المستخدمين من الرابط
+    const urlParams = new URLSearchParams(window.location.search);
+    const user1 = urlParams.get('user');
+    const user2 = urlParams.get('otherUser');
+
+    document.getElementById('user1').textContent = user1;
+    document.getElementById('user2').textContent = user2;
+
+    // تفعيل إرسال الرسائل
+    document.getElementById('sendMessageBtn').addEventListener('click', function() {
+        const message = document.getElementById('messageInput').value;
+        if (message.trim() !== "") {
+            const messageRef = push(ref(db, 'messages/'));
+            set(messageRef, {
+                sender: user1,
+                receiver: user2,
+                message: message,
+                timestamp: Date.now()
+            });
+
+            document.getElementById('messageInput').value = ""; // Clear input
+        }
+    });
+
+    // قراءة الرسائل من قاعدة البيانات وعرضها
+    const messagesRef = ref(db, 'messages');
+    onValue(messagesRef, (snapshot) => {
+        const data = snapshot.val();
+        const chatBox = document.getElementById('chatBox');
+        chatBox.innerHTML = ""; // Clear chat box
+        for (let messageId in data) {
+            const message = data[messageId];
+            if ((message.sender === user1 && message.receiver === user2) || (message.sender === user2 && message.receiver === user1)) {
+                const msgDiv = document.createElement('div');
+                msgDiv.textContent = message.sender + ": " + message.message;
+                chatBox.appendChild(msgDiv);
+            }
+        }
+    });
+  </script>
+
+</body></html>
